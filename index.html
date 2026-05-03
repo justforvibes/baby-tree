@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>🌱 Feed the Baby Tree</title>
+  <style>
+    /* ── Reset & Base ─────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #f5f9f0;
+      font-family: 'Segoe UI', sans-serif;
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+      user-select: none;
+    }
+
+    /* ── Sky & Ground ─────────────────────────────────────── */
+    #scene {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      background: linear-gradient(180deg,
+        #dff0fc 0%,
+        #ffffff 55%,
+        #c8e6a0 55%,
+        #a8d878 100%);
+      overflow: hidden;
+    }
+
+    /* ── Sun ──────────────────────────────────────────────── */
+    #sun {
+      position: absolute;
+      top: 30px; right: 80px;
+      width: 70px; height: 70px;
+      background: radial-gradient(circle, #ffe066 60%, #ffd700 100%);
+      border-radius: 50%;
+      box-shadow: 0 0 40px 15px #ffe06688;
+      animation: sunPulse 4s ease-in-out infinite;
+    }
+    @keyframes sunPulse {
+      0%,100% { box-shadow: 0 0 40px 15px #ffe06688; }
+      50%      { box-shadow: 0 0 60px 25px #ffe066aa; }
+    }
+
+    /* ── Clouds ───────────────────────────────────────────── */
+    .cloud {
+      position: absolute;
+      top: 40px;
+      animation: cloudDrift linear infinite;
+      opacity: .85;
+    }
+    .cloud span {
+      display: block;
+      background: #fff;
+      border-radius: 50%;
+      position: absolute;
+    }
+    .cloud span:nth-child(1){ width:80px;height:50px; top:15px; left:0; }
+    .cloud span:nth-child(2){ width:55px;height:55px; top:5px;  left:35px; }
+    .cloud span:nth-child(3){ width:65px;height:45px; top:18px; left:70px; }
+    .cloud span:nth-child(4){ width:120px;height:30px;top:30px; left:10px; }
+
+    @keyframes cloudDrift {
+      from { transform: translateX(-200px); }
+      to   { transform: translateX(110vw); }
+    }
+
+    /* ── Background Trees ─────────────────────────────────── */
+    .bg-tree {
+      position: absolute;
+      bottom: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .bg-tree .canopy {
+      border-radius: 50% 50% 40% 40%;
+      position: relative;
+      top: 6px;
+    }
+    .bg-tree .trunk {
+      background: #8B5E3C;
+      border-radius: 3px;
+    }
+
+    /* ── Walking Animals ──────────────────────────────────── */
+    .animal {
+      position: absolute;
+      bottom: 55px;
+      font-size: 2.2rem;
+      animation: walk linear infinite;
+      filter: drop-shadow(1px 2px 2px #0003);
+    }
+    @keyframes walk {
+      0%   { transform: translateX(-120px) scaleX(1); }
+      49%  { transform: translateX(110vw)  scaleX(1); }
+      50%  { transform: translateX(110vw)  scaleX(-1); }
+      99%  { transform: translateX(-120px) scaleX(-1); }
+      100% { transform: translateX(-120px) scaleX(1); }
+    }
+    /* bobbing foot animation */
+    .animal { animation: walkBob linear infinite; }
+    @keyframes walkBob {
+      0%   { transform: translateX(-120px) scaleX(1)  translateY(0); }
+      12%  { transform: translateX(14vw)   scaleX(1)  translateY(-4px); }
+      25%  { transform: translateX(28vw)   scaleX(1)  translateY(0px); }
+      37%  { transform: translateX(42vw)   scaleX(1)  translateY(-4px); }
+      49%  { transform: translateX(110vw)  scaleX(1)  translateY(0); }
+      50%  { transform: translateX(110vw)  scaleX(-1) translateY(0); }
+      62%  { transform: translateX(70vw)   scaleX(-1) translateY(-4px); }
+      75%  { transform: translateX(50vw)   scaleX(-1) translateY(0); }
+      87%  { transform: translateX(25vw)   scaleX(-1) translateY(-4px); }
+      100% { transform: translateX(-120px) scaleX(1)  translateY(0); }
+    }
+
+    /* ── Baby / Growing Tree ──────────────────────────────── */
+    #tree-wrapper {
+      position: absolute;
+      bottom: 48px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transition: all .6s ease;
+      cursor: pointer;
+    }
+
+    #tree-canopy {
+      border-radius: 50% 50% 40% 40%;
+      background: #4caf50;
+      transition: width .6s ease, height .6s ease, background .6s ease;
+      box-shadow: inset -6px -8px 0 #2e7d32, 0 4px 12px #4caf5055;
+      position: relative;
+      top: 8px;
+    }
+    #tree-canopy::after {
+      content: '';
+      position: absolute;
+      top: 10%; left: 15%;
+      width: 30%; height: 30%;
+      border-radius: 50%;
+      background: rgba(255,255,255,.15);
+    }
+
+    #tree-trunk {
+      background: #8B5E3C;
+      border-radius: 4px;
+      transition: width .6s ease, height .6s ease;
+    }
+
+    /* pulse on feed */
+    @keyframes treeBounce {
+      0%   { transform: scale(1); }
+      30%  { transform: scale(1.12); }
+      60%  { transform: scale(.96); }
+      100% { transform: scale(1); }
+    }
+    .bounce { animation: treeBounce .5s ease forwards; }
+
+    /* ── Floating +1 ─────────────────────────────────────── */
+    .plus-one {
+      position: absolute;
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: #2e7d32;
+      pointer-events: none;
+      animation: floatUp 1.2s ease forwards;
+      z-index: 99;
+    }
+    @keyframes floatUp {
+      0%   { opacity: 1; transform: translateY(0) scale(1); }
+      100% { opacity: 0; transform: translateY(-70px) scale(1.4); }
+    }
+
+    /* ── HUD ──────────────────────────────────────────────── */
+    #hud {
+      position: fixed;
+      top: 18px; left: 50%;
+      transform: translateX(-50%);
+      background: rgba(255,255,255,.75);
+      backdrop-filter: blur(6px);
+      border-radius: 40px;
+      padding: 10px 30px;
+      display: flex;
+      gap: 32px;
+      align-items: center;
+      box-shadow: 0 4px 20px #0001;
+      z-index: 10;
+      font-size: .95rem;
+      color: #2e5a1c;
+      font-weight: 600;
+    }
+    #hud span b { font-size: 1.2rem; color: #1b5e20; }
+
+    /* ── Feed Button ─────────────────────────────────────── */
+    #feed-btn {
+      position: fixed;
+      bottom: 28px; left: 50%;
+      transform: translateX(-50%);
+      background: linear-gradient(135deg, #66bb6a, #2e7d32);
+      color: #fff;
+      border: none;
+      border-radius: 50px;
+      padding: 16px 48px;
+      font-size: 1.25rem;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 6px 24px #2e7d3244;
+      z-index: 10;
+      letter-spacing: .5px;
+      transition: transform .15s, box-shadow .15s;
+    }
+    #feed-btn:hover  { transform: translateX(-50%) scale(1.06); box-shadow: 0 8px 28px #2e7d3266; }
+    #feed-btn:active { transform: translateX(-50%) scale(.97); }
+
+    /* ── Stage Badge ──────────────────────────────────────── */
+    #stage-badge {
+      position: fixed;
+      bottom: 90px; left: 50%;
+      transform: translateX(-50%);
+      background: #ffffffcc;
+      backdrop-filter: blur(4px);
+      border-radius: 30px;
+      padding: 6px 22px;
+      font-size: .95rem;
+      font-weight: 700;
+      color: #388e3c;
+      z-index: 10;
+      transition: opacity .4s;
+    }
+
+    /* ── Grass tufts ─────────────────────────────────────── */
+    .grass {
+      position: absolute;
+      bottom: 48px;
+      font-size: 1.4rem;
+      opacity: .7;
+    }
+
+    /* ── Particles (leaves on feed) ──────────────────────── */
+    .leaf-particle {
+      position: fixed;
+      pointer-events: none;
+      font-size: 1.2rem;
+      animation: leafFall 1.4s ease forwards;
+      z-index: 99;
+    }
+    @keyframes leafFall {
+      0%   { opacity: 1; transform: translate(0,0) rotate(0deg); }
+      100% { opacity: 0; transform: translate(var(--lx), var(--ly)) rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Background Music ───────────────────────────────────── -->
+<!-- We generate a soft ambient tune with the Web Audio API — no file needed -->
+
+<div id="scene">
+  <div id="sun"></div>
+
+  <!-- Clouds injected by JS -->
+  <!-- Background trees injected by JS -->
+  <!-- Animals injected by JS -->
+  <!-- Grass injected by JS -->
+
+  <!-- Baby Tree -->
+  <div id="tree-wrapper">
+    <div id="tree-canopy"></div>
+    <div id="tree-trunk"></div>
+  </div>
+</div>
+
+<!-- HUD -->
+<div id="hud">
+  <span>🌱 Feeds: <b id="feed-count">0</b></span>
+  <span>📏 Stage: <b id="stage-name">Seedling</b></span>
+  <span>🌳 Height: <b id="tree-height">1</b></span>
+</div>
+
+<!-- Stage Badge -->
+<div id="stage-badge">🌱 Tap the button to feed your baby tree!</div>
+
+<!-- Feed Button -->
+<button id="feed-btn">💧 Feed the Tree</button>
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+   🎵  Soft Ambient Music via Web Audio API
+   ═══════════════════════════════════════════════════════════ */
+let audioCtx = null;
+
+function startAmbient() {
+  if (audioCtx) return;
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+  const master = audioCtx.createGain();
+  master.gain.value = 0.12;
+  master.connect(audioCtx.destination);
+
+  // Pad chords (pentatonic — always sounds peaceful)
+  const notes = [261.63, 293.66, 329.63, 392.00, 440.00, 523.25, 587.33];
+
+  function playChord() {
+    const chord = [notes[0], notes[2], notes[4]]; // C E G
+    chord.forEach(freq => {
+      const osc  = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0, audioCtx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.06, audioCtx.currentTime + 1.2);
+      gain.gain.linearRampToValueAtTime(0,    audioCtx.currentTime + 5);
+      osc.connect(gain);
+      gain.connect(master);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 5.5);
+    });
+    setTimeout(playChord, 5000 + Math.random() * 3000);
+  }
+
+  // Gentle random melody
+  function playMelody() {
+    const n = notes[Math.floor(Math.random() * notes.length)];
+    const osc  = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.value = n;
+    gain.gain.setValueAtTime(0, audioCtx.currentTime);
+    gain.gain.linearRampToValueAtTime(0.045, audioCtx.currentTime + .2);
+    gain.gain.linearRampToValueAtTime(0,      audioCtx.currentTime + 1.5);
+    osc.connect(gain);
+    gain.connect(master);
+    osc.start();
+    osc.stop(audioCtx.currentTime + 1.8);
+    setTimeout(playMelody, 600 + Math.random() * 1400);
+  }
+
+  // Wind noise
+  const bufferSize = 2 * audioCtx.sampleRate;
+  const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+  const output = noiseBuffer.getChannelData(0);
+  for (let i = 0; i < bufferSize; i++) output[i] = Math.random() * 2 - 1;
+  const whiteNoise = audioCtx.createBufferSource();
+  whiteNoise.buffer = noiseBuffer;
+  whiteNoise.loop = true;
+  const windFilter = audioCtx.createBiquadFilter();
+  windFilter.type = 'lowpass';
+  windFilter.frequency.value = 400;
+  const windGain = audioCtx.createGain();
+  windGain.gain.value = 0.02;
+  whiteNoise.connect(windFilter);
+  windFilter.connect(windGain);
+  windGain.connect(master);
+  whiteNoise.start();
+
+  playChord();
+  setTimeout(playMelody, 1000);
+}
+
+document.addEventListener('click', startAmbient, { once: true });
+
+/* ═══════════════════════════════════════════════════════════
+   🌲  Scene Builder
+   ═══════════════════════════════════════════════════════════ */
+const scene = document.getElementById('scene');
+
+// ── Clouds ──────────────────────────────────────────────────
+const cloudData = [
+  { top: 40,  left: 5,   dur: 28, delay: 0   },
+  { top: 70,  left: 40,  dur: 38, delay: -12 },
+  { top: 25,  left: 70,  dur: 32, delay: -6  },
+  { top: 90,  left: 20,  dur: 44, delay: -20 },
+];
+cloudData.forEach(c => {
+  const el = document.createElement('div');
+  el.className = 'cloud';
+  el.style.top  = c.top  + 'px';
+  el.style.left = c.left + 'vw';
+  el.style.animationDuration = c.dur + 's';
+  el.style.animationDelay   = c.delay + 's';
+  el.innerHTML = '<span></span><span></span><span></span><span></span>';
+  scene.appendChild(el);
+});
+
+// ── Background Trees ─────────────────────────────────────────
+const bgTrees = [
+  { left: 5,  trunkW: 18, trunkH: 70,  canopyW: 90,  canopyH: 110, color: '#388e3c' },
+  { left: 12, trunkW: 14, trunkH: 55,  canopyW: 75,  canopyH: 95,  color: '#2e7d32' },
+  { left: 20, trunkW: 22, trunkH: 90,  canopyW: 110, canopyH: 140, color: '#43a047' },
+  { left: 72, trunkW: 20, trunkH: 80,  canopyW: 100, canopyH: 130, color: '#33691e' },
+  { left: 80, trunkW: 15, trunkH: 60,  canopyW: 80,  canopyH: 100, color: '#558b2f' },
+  { left: 88, trunkW: 24, trunkH: 95,  canopyW: 115, canopyH: 150, color: '#1b5e20' },
+  { left: 93, trunkW: 12, trunkH: 50,  canopyW: 65,  canopyH: 85,  color: '#388e3c' },
+];
+bgTrees.forEach(t => {
+  const el = document.createElement('div');
+  el.className = 'bg-tree';
+  el.style.left = t.left + 'vw';
+  el.innerHTML = `
+    <div class="canopy" style="
+      width:${t.canopyW}px;height:${t.canopyH}px;
+      background:${t.color};
+      box-shadow:inset -5px -8px 0 ${shadeColor(t.color,-30)}"></div>
+    <div class="trunk" style="width:${t.trunkW}px;height:${t.trunkH}px"></div>`;
+  scene.appendChild(el);
+});
+
+function shadeColor(col, amt) {
+  // very light hex shader
+  let c = col.replace('#','');
+  return '#' + c.match(/.{2}/g).map(x => {
+    let v = Math.min(255, Math.max(0, parseInt(x,16) + amt));
+    return v.toString(16).padStart(2,'0');
+  }).join('');
+}
+
+// ── Grass tufts ───────────────────────────────────────────────
+const grassEmoji = ['🌿','🌾','🍀','🌱'];
+for (let i = 0; i < 18; i++) {
+  const g = document.createElement('div');
+  g.className = 'grass';
+  g.textContent = grassEmoji[Math.floor(Math.random()*grassEmoji.length)];
+  g.style.left = (2 + Math.random() * 96) + 'vw';
+  g.style.fontSize = (.8 + Math.random() * .8) + 'rem';
+  scene.appendChild(g);
+}
+
+// ── Walking Animals ───────────────────────────────────────────
+const animals = [
+  { emoji: '🦊', bottom: 58, dur: 22, delay: -4  },
+  { emoji: '🐇', bottom: 56, dur: 18, delay: -10 },
+  { emoji: '🦌', bottom: 60, dur: 30, delay: -2  },
+  { emoji: '🐿️', bottom: 55, dur: 14, delay: -7  },
+  { emoji: '🦝', bottom: 57, dur: 25, delay: -15 },
+  { emoji: '🐦', bottom: 130, dur: 12, delay: -3 },
+  { emoji: '🦋', bottom: 160, dur: 16, delay: -8 },
+];
+animals.forEach(a => {
+  const el = document.createElement('div');
+  el.className = 'animal';
+  el.textContent = a.emoji;
+  el.style.bottom = a.bottom + 'px';
+  el.style.animationDuration = a.dur + 's';
+  el.style.animationDelay   = a.delay + 's';
+  el.style.fontSize = (1.8 + Math.random() * .8) + 'rem';
+  scene.appendChild(el);
+});
+
+/* ═══════════════════════════════════════════════════════════
+   🌱  Tree Growth Logic
+   ═══════════════════════════════════════════════════════════ */
+const stages = [
+  { name: 'Seedling',    feeds:  0,  cW: 28,  cH: 28,  tW: 6,  tH: 14,  color: '#81c784' },
+  { name: 'Sprout',      feeds:  3,  cW: 50,  cH: 55,  tW: 9,  tH: 26,  color: '#66bb6a' },
+  { name: 'Sapling',     feeds:  8,  cW: 75,  cH: 80,  tW: 13, tH: 42,  color: '#4caf50' },
+  { name: 'Young Tree',  feeds: 15,  cW: 100, cH: 115, tW: 18, tH: 62,  color: '#43a047' },
+  { name: 'Tree',        feeds: 25,  cW: 130, cH: 150, tW: 22, tH: 85,  color: '#388e3c' },
+  { name: 'Tall Tree',   feeds: 40,  cW: 160, cH: 185, tW: 27, tH: 110, color: '#2e7d32' },
+  { name: 'Grand Tree',  feeds: 60,  cW: 200, cH: 230, tW: 34, tH: 140, color: '#1b5e20' },
+  { name: 'Ancient Oak', feeds: 90,  cW: 240, cH: 275, tW: 42, tH: 170, color: '#33691e' },
+];
+
+let feedCount = 0;
+
+const canopy  = document.getElementById('tree-canopy');
+const trunk   = document.getElementById('tree-trunk');
+const wrapper = document.getElementById('tree-wrapper');
+const feedBtn = document.getElementById('feed-btn');
+const feedCountEl  = document.getElementById('feed-count');
+const stageNameEl  = document.getElementById('stage-name');
+const treeHeightEl = document.getElementById('tree-height');
+const stageBadge   = document.getElementById('stage-badge');
+
+function currentStage() {
+  let s = stages[0];
+  for (let i = stages.length - 1; i >= 0; i--) {
+    if (feedCount >= stages[i].feeds) { s = stages[i]; break; }
+  }
+  return s;
+}
+
+function applyStage(s) {
+  canopy.style.width   = s.cW + 'px';
+  canopy.style.height  = s.cH + 'px';
+  canopy.style.background = s.color;
+  trunk.style.width  = s.tW + 'px';
+  trunk.style.height = s.tH + 'px';
+}
+
+function spawnPlusOne() {
+  const rect = wrapper.getBoundingClientRect();
+  const el = document.createElement('div');
+  el.className = 'plus-one';
+  el.textContent = '+1 💧';
+  el.style.left = (rect.left + rect.width/2 - 25 + (Math.random()*30-15)) + 'px';
+  el.style.top  = (rect.top  - 10) + 'px';
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 1300);
+}
+
+function spawnLeaves() {
+  const leaves = ['🍃','🍀','🌿','🍂','🌱'];
+  const rect = wrapper.getBoundingClientRect();
+  for (let i = 0; i < 7; i++) {
+    const el = document.createElement('div');
+    el.className = 'leaf-particle';
+    el.textContent = leaves[Math.floor(Math.random()*leaves.length)];
+    el.style.left = (rect.left + Math.random()*rect.width) + 'px';
+    el.style.top  = (rect.top  + Math.random()*rect.height*.5) + 'px';
+    const lx = (Math.random()*120 - 60) + 'px';
+    const ly = (Math.random()*-80 - 20) + 'px';
+    el.style.setProperty('--lx', lx);
+    el.style.setProperty('--ly', ly);
+    el.style.animationDelay = (Math.random()*.4) + 's';
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 1600);
+  }
+}
+
+function updateHUD(s, prevStage) {
+  feedCountEl.textContent  = feedCount;
+  stageNameEl.textContent  = s.name;
+  treeHeightEl.textContent = Math.round(s.tH / 14);
+
+  if (prevStage && s.name !== prevStage.name) {
+    stageBadge.textContent = `🎉 Your tree grew into a ${s.name}!`;
+    stageBadge.style.opacity = '1';
+    setTimeout(() => { stageBadge.style.opacity = '0'; }, 3000);
+  }
+}
+
+function feed() {
+  const prev = currentStage();
+  feedCount++;
+  const next = currentStage();
+
+  feedCountEl.textContent = feedCount;
+  applyStage(next);
+  updateHUD(next, prev);
+  spawnPlusOne();
+  spawnLeaves();
+
+  // bounce animation
+  wrapper.classList.remove('bounce');
+  void wrapper.offsetWidth; // reflow
+  wrapper.classList.add('bounce');
+  wrapper.addEventListener('animationend', () => wrapper.classList.remove('bounce'), { once: true });
+
+  // button emoji cycling
+  const drops = ['💧','🌧️','🚿','🪣','☔'];
+  feedBtn.innerHTML = drops[feedCount % drops.length] + ' Feed the Tree';
+}
+
+feedBtn.addEventListener('click', feed);
+// Also allow clicking the tree itself
+wrapper.addEventListener('click', feed);
+
+// Init
+applyStage(currentStage());
+updateHUD(currentStage(), null);
+</script>
+</body>
+</html>
