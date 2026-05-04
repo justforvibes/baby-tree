@@ -1,568 +1,1200 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>🌱 Feed the Baby Tree</title>
-  <style>
-    /* ── Reset & Base ─────────────────────────────────────── */
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>🌱 Feed the Baby Tree</title>
+<style>
+/* ══════════════════════════════════════════════
+   RESET
+══════════════════════════════════════════════ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{overflow:hidden;width:100vw;height:100vh;font-family:'Segoe UI',sans-serif;touch-action:none}
 
-    body {
-      background: #f5f9f0;
-      font-family: 'Segoe UI', sans-serif;
-      overflow: hidden;
-      height: 100vh;
-      width: 100vw;
-      user-select: none;
-    }
+/* ══════════════════════════════════════════════
+   SCENE
+══════════════════════════════════════════════ */
+#scene{
+  position:relative;width:100vw;height:100vh;overflow:hidden;
+  transition:background 4s ease;
+}
 
-    /* ── Sky & Ground ─────────────────────────────────────── */
-    #scene {
-      position: relative;
-      width: 100vw;
-      height: 100vh;
-      background: linear-gradient(180deg,
-        #dff0fc 0%,
-        #ffffff 55%,
-        #c8e6a0 55%,
-        #a8d878 100%);
-      overflow: hidden;
-    }
+/* ── SKY GRADIENTS ── */
+.sky-day    { background:linear-gradient(180deg,#87CEEB 0%,#d4f1f9 45%,#c8e6a0 45%,#7cb846 100%); }
+.sky-sunset { background:linear-gradient(180deg,#ff9966 0%,#ffcc88 40%,#d4a06a 45%,#7a9e45 45%,#5a8232 100%); }
+.sky-night  { background:linear-gradient(180deg,#0a0a2e 0%,#0d1b4b 40%,#1a3a1a 45%,#0d2200 100%); }
 
-    /* ── Sun ──────────────────────────────────────────────── */
-    #sun {
-      position: absolute;
-      top: 30px; right: 80px;
-      width: 70px; height: 70px;
-      background: radial-gradient(circle, #ffe066 60%, #ffd700 100%);
-      border-radius: 50%;
-      box-shadow: 0 0 40px 15px #ffe06688;
-      animation: sunPulse 4s ease-in-out infinite;
-    }
-    @keyframes sunPulse {
-      0%,100% { box-shadow: 0 0 40px 15px #ffe06688; }
-      50%      { box-shadow: 0 0 60px 25px #ffe066aa; }
-    }
+/* ── SUN ── */
+#sun{
+  position:absolute;width:70px;height:70px;border-radius:50%;
+  background:radial-gradient(circle,#ffe566 60%,#ffaa00 100%);
+  box-shadow:0 0 50px 20px #ffdd6688;
+  transition:top 3s ease, left 3s ease, opacity 3s ease, transform 3s ease;
+  pointer-events:none;z-index:1;
+}
 
-    /* ── Clouds ───────────────────────────────────────────── */
-    .cloud {
-      position: absolute;
-      top: 40px;
-      animation: cloudDrift linear infinite;
-      opacity: .85;
-    }
-    .cloud span {
-      display: block;
-      background: #fff;
-      border-radius: 50%;
-      position: absolute;
-    }
-    .cloud span:nth-child(1){ width:80px;height:50px; top:15px; left:0; }
-    .cloud span:nth-child(2){ width:55px;height:55px; top:5px;  left:35px; }
-    .cloud span:nth-child(3){ width:65px;height:45px; top:18px; left:70px; }
-    .cloud span:nth-child(4){ width:120px;height:30px;top:30px; left:10px; }
+/* ── MOON ── */
+#moon{
+  position:absolute;width:55px;height:55px;border-radius:50%;
+  background:radial-gradient(circle,#f0f0d0 60%,#c8c890 100%);
+  box-shadow:0 0 25px 8px #f0f0c055;
+  opacity:0;
+  transition:top 3s ease, left 3s ease, opacity 3s ease;
+  pointer-events:none;z-index:1;
+}
 
-    @keyframes cloudDrift {
-      from { transform: translateX(-200px); }
-      to   { transform: translateX(110vw); }
-    }
+/* ── STARS ── */
+.star{
+  position:absolute;border-radius:50%;background:#fff;
+  pointer-events:none;z-index:0;
+  animation:twinkle ease-in-out infinite alternate;
+}
+@keyframes twinkle{from{opacity:.2;transform:scale(.7)} to{opacity:1;transform:scale(1.2)}}
 
-    /* ── Background Trees ─────────────────────────────────── */
-    .bg-tree {
-      position: absolute;
-      bottom: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-    .bg-tree .canopy {
-      border-radius: 50% 50% 40% 40%;
-      position: relative;
-      top: 6px;
-    }
-    .bg-tree .trunk {
-      background: #8B5E3C;
-      border-radius: 3px;
-    }
+/* ── CLOUDS ── */
+.cloud{position:absolute;z-index:2;pointer-events:none;}
+.cloud-body{
+  position:relative;height:50px;
+  transition:opacity 3s ease;
+}
+.cloud-body span{
+  display:block;background:rgba(255,255,255,0.92);
+  border-radius:50%;position:absolute;
+}
+@keyframes cloudFloat{
+  from{transform:translateX(-220px)}
+  to{transform:translateX(110vw)}
+}
 
-    /* ── Walking Animals ──────────────────────────────────── */
-    .animal {
-      position: absolute;
-      bottom: 55px;
-      font-size: 2.2rem;
-      animation: walk linear infinite;
-      filter: drop-shadow(1px 2px 2px #0003);
-    }
-    @keyframes walk {
-      0%   { transform: translateX(-120px) scaleX(1); }
-      49%  { transform: translateX(110vw)  scaleX(1); }
-      50%  { transform: translateX(110vw)  scaleX(-1); }
-      99%  { transform: translateX(-120px) scaleX(-1); }
-      100% { transform: translateX(-120px) scaleX(1); }
-    }
-    /* bobbing foot animation */
-    .animal { animation: walkBob linear infinite; }
-    @keyframes walkBob {
-      0%   { transform: translateX(-120px) scaleX(1)  translateY(0); }
-      12%  { transform: translateX(14vw)   scaleX(1)  translateY(-4px); }
-      25%  { transform: translateX(28vw)   scaleX(1)  translateY(0px); }
-      37%  { transform: translateX(42vw)   scaleX(1)  translateY(-4px); }
-      49%  { transform: translateX(110vw)  scaleX(1)  translateY(0); }
-      50%  { transform: translateX(110vw)  scaleX(-1) translateY(0); }
-      62%  { transform: translateX(70vw)   scaleX(-1) translateY(-4px); }
-      75%  { transform: translateX(50vw)   scaleX(-1) translateY(0); }
-      87%  { transform: translateX(25vw)   scaleX(-1) translateY(-4px); }
-      100% { transform: translateX(-120px) scaleX(1)  translateY(0); }
-    }
+/* ── BACKGROUND TREES ── */
+.bg-tree{position:absolute;bottom:0;display:flex;flex-direction:column;align-items:center;z-index:3;}
+.bg-tree .can{border-radius:50% 50% 40% 40%;position:relative;top:8px;}
+.bg-tree .trk{background:#7a4f2a;border-radius:3px;}
 
-    /* ── Baby / Growing Tree ──────────────────────────────── */
-    #tree-wrapper {
-      position: absolute;
-      bottom: 48px;
-      left: 50%;
-      transform: translateX(-50%);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      transition: all .6s ease;
-      cursor: pointer;
-    }
+/* ── LAKE ── */
+#lake{
+  position:absolute;bottom:52px;
+  border-radius:50%;
+  background:radial-gradient(ellipse at 30% 30%, #6ec6f0 0%, #3a8fc4 50%, #1a5f8a 100%);
+  box-shadow:inset 0 -4px 12px #1a5f8a88, 0 2px 8px #3a8fc455;
+  z-index:4;overflow:hidden;
+  animation:lakeShimmer 3s ease-in-out infinite alternate;
+}
+@keyframes lakeShimmer{
+  0%{box-shadow:inset 0 -4px 12px #1a5f8a88, 0 2px 8px #3a8fc455;}
+  100%{box-shadow:inset 0 -4px 18px #1e6ea055, 0 2px 12px #5ab0e888;}
+}
+/* ripple lines on lake */
+.lake-line{
+  position:absolute;border-radius:50%;
+  border:1px solid rgba(255,255,255,0.25);
+  animation:rippleLoop 3s ease-in-out infinite;
+}
+@keyframes rippleLoop{
+  0%,100%{transform:scale(1);opacity:.4}
+  50%{transform:scale(1.04);opacity:.15}
+}
 
-    #tree-canopy {
-      border-radius: 50% 50% 40% 40%;
-      background: #4caf50;
-      transition: width .6s ease, height .6s ease, background .6s ease;
-      box-shadow: inset -6px -8px 0 #2e7d32, 0 4px 12px #4caf5055;
-      position: relative;
-      top: 8px;
-    }
-    #tree-canopy::after {
-      content: '';
-      position: absolute;
-      top: 10%; left: 15%;
-      width: 30%; height: 30%;
-      border-radius: 50%;
-      background: rgba(255,255,255,.15);
-    }
+/* ── CAVE ── */
+#cave{
+  position:absolute;bottom:48px;z-index:4;
+}
+#cave-mouth{
+  width:90px;height:65px;
+  background:radial-gradient(ellipse at 50% 100%, #1a1a1a 40%, #3a2a1a 100%);
+  border-radius:50% 50% 0 0;
+  position:relative;
+  box-shadow:inset 0 10px 20px #0008;
+}
+#cave-rock{
+  width:120px;height:30px;
+  background:linear-gradient(180deg,#8a7a6a,#6a5a4a);
+  border-radius:10px 10px 0 0;
+  position:relative;top:2px;
+}
 
-    #tree-trunk {
-      background: #8B5E3C;
-      border-radius: 4px;
-      transition: width .6s ease, height .6s ease;
-    }
+/* ── GRASS ── */
+.grass{position:absolute;bottom:48px;pointer-events:none;z-index:4;}
 
-    /* pulse on feed */
-    @keyframes treeBounce {
-      0%   { transform: scale(1); }
-      30%  { transform: scale(1.12); }
-      60%  { transform: scale(.96); }
-      100% { transform: scale(1); }
-    }
-    .bounce { animation: treeBounce .5s ease forwards; }
+/* ── ANIMALS ── */
+.animal{
+  position:absolute;font-size:2rem;z-index:5;
+  pointer-events:none;
+  transition:bottom .8s ease, left .8s ease, opacity .6s ease;
+}
 
-    /* ── Floating +1 ─────────────────────────────────────── */
-    .plus-one {
-      position: absolute;
-      font-size: 1.4rem;
-      font-weight: 800;
-      color: #2e7d32;
-      pointer-events: none;
-      animation: floatUp 1.2s ease forwards;
-      z-index: 99;
-    }
-    @keyframes floatUp {
-      0%   { opacity: 1; transform: translateY(0) scale(1); }
-      100% { opacity: 0; transform: translateY(-70px) scale(1.4); }
-    }
+/* ── RAIN ── */
+#rain-layer{
+  position:absolute;inset:0;pointer-events:none;z-index:20;
+  display:none;
+}
+.raindrop{
+  position:absolute;width:2px;
+  background:linear-gradient(180deg,transparent,#aaddff);
+  border-radius:2px;
+  animation:fall linear infinite;
+}
+@keyframes fall{from{transform:translateY(-20px)}to{transform:translateY(110vh)}}
 
-    /* ── HUD ──────────────────────────────────────────────── */
-    #hud {
-      position: fixed;
-      top: 18px; left: 50%;
-      transform: translateX(-50%);
-      background: rgba(255,255,255,.75);
-      backdrop-filter: blur(6px);
-      border-radius: 40px;
-      padding: 10px 30px;
-      display: flex;
-      gap: 32px;
-      align-items: center;
-      box-shadow: 0 4px 20px #0001;
-      z-index: 10;
-      font-size: .95rem;
-      color: #2e5a1c;
-      font-weight: 600;
-    }
-    #hud span b { font-size: 1.2rem; color: #1b5e20; }
+/* ── SEED / TREE ── */
+#tree-container{
+  position:absolute;bottom:48px;
+  display:flex;flex-direction:column;align-items:center;
+  z-index:6;
+  transition:left .6s;
+  cursor:default;
+}
+/* Ground / soil mound */
+#soil{
+  width:60px;height:18px;
+  background:radial-gradient(ellipse,#8B5E3C 60%,#6b4422 100%);
+  border-radius:50%;
+  position:relative;z-index:1;
+}
+/* Seed stage */
+#seed{
+  width:16px;height:22px;
+  background:radial-gradient(ellipse at 40% 30%,#d4a043 50%,#8B5E3C 100%);
+  border-radius:50% 50% 40% 40%;
+  position:absolute;bottom:10px;
+  left:50%;transform:translateX(-50%);
+  box-shadow:2px 3px 5px #0003;
+  transition:opacity .8s;
+  z-index:2;
+}
+/* Tree trunk */
+#tree-trunk{
+  background:#8B5E3C;border-radius:5px 5px 3px 3px;
+  transition:width .7s ease,height .7s ease;
+  position:relative;z-index:2;
+}
+/* Tree canopy */
+#tree-canopy{
+  border-radius:50% 50% 40% 40%;
+  position:relative;top:6px;z-index:2;
+  transition:width .7s ease,height .7s ease,background .7s ease;
+  box-shadow:inset -6px -10px 0 #0002;
+}
+#tree-canopy::after{
+  content:'';position:absolute;
+  top:12%;left:18%;width:28%;height:28%;
+  border-radius:50%;background:rgba(255,255,255,.18);
+}
+/* second canopy layer for big trees */
+#tree-canopy2{
+  border-radius:50% 50% 40% 40%;
+  position:relative;z-index:2;top:14px;
+  transition:width .7s ease,height .7s ease,background .7s ease,opacity .7s ease;
+  opacity:0;
+  box-shadow:inset -5px -8px 0 #0002;
+}
+@keyframes treeBounce{
+  0%{transform:scale(1)} 30%{transform:scale(1.1)} 70%{transform:scale(.97)} 100%{transform:scale(1)}
+}
+.treeBounce{animation:treeBounce .55s ease forwards;}
 
-    /* ── Feed Button ─────────────────────────────────────── */
-    #feed-btn {
-      position: fixed;
-      bottom: 28px; left: 50%;
-      transform: translateX(-50%);
-      background: linear-gradient(135deg, #66bb6a, #2e7d32);
-      color: #fff;
-      border: none;
-      border-radius: 50px;
-      padding: 16px 48px;
-      font-size: 1.25rem;
-      font-weight: 700;
-      cursor: pointer;
-      box-shadow: 0 6px 24px #2e7d3244;
-      z-index: 10;
-      letter-spacing: .5px;
-      transition: transform .15s, box-shadow .15s;
-    }
-    #feed-btn:hover  { transform: translateX(-50%) scale(1.06); box-shadow: 0 8px 28px #2e7d3266; }
-    #feed-btn:active { transform: translateX(-50%) scale(.97); }
+/* ── BOWL (drag item) ── */
+#bowl{
+  position:fixed;
+  width:52px;height:52px;
+  font-size:2.5rem;line-height:52px;text-align:center;
+  cursor:grab;z-index:100;
+  user-select:none;
+  filter:drop-shadow(2px 3px 4px #0004);
+  transition:transform .15s;
+  bottom:32px; left:50%;
+  transform:translateX(-50%);
+}
+#bowl:hover{transform:translateX(-50%) scale(1.15);}
+#bowl.dragging{cursor:grabbing;transform:scale(1.2);transition:none;}
+#bowl.has-water{filter:drop-shadow(0 0 8px #4fc3f7);}
+#bowl-hint{
+  position:fixed;bottom:92px;left:50%;transform:translateX(-50%);
+  background:#ffffffcc;backdrop-filter:blur(6px);border-radius:20px;
+  padding:7px 18px;font-size:.85rem;color:#1a5276;font-weight:600;
+  z-index:100;white-space:nowrap;
+  transition:opacity .5s;
+}
 
-    /* ── Stage Badge ──────────────────────────────────────── */
-    #stage-badge {
-      position: fixed;
-      bottom: 90px; left: 50%;
-      transform: translateX(-50%);
-      background: #ffffffcc;
-      backdrop-filter: blur(4px);
-      border-radius: 30px;
-      padding: 6px 22px;
-      font-size: .95rem;
-      font-weight: 700;
-      color: #388e3c;
-      z-index: 10;
-      transition: opacity .4s;
-    }
+/* ── HUD ── */
+#hud{
+  position:fixed;top:14px;left:50%;transform:translateX(-50%);
+  background:rgba(255,255,255,.78);backdrop-filter:blur(8px);
+  border-radius:40px;padding:8px 26px;
+  display:flex;gap:22px;align-items:center;
+  box-shadow:0 4px 22px #0001;z-index:200;
+  font-size:.88rem;color:#2e5a1c;font-weight:600;
+  flex-wrap:wrap;justify-content:center;
+}
+#hud span b{font-size:1.1rem;color:#1b5e20;}
 
-    /* ── Grass tufts ─────────────────────────────────────── */
-    .grass {
-      position: absolute;
-      bottom: 48px;
-      font-size: 1.4rem;
-      opacity: .7;
-    }
+/* ── STAGE TOAST ── */
+#toast{
+  position:fixed;top:76px;left:50%;transform:translateX(-50%);
+  background:linear-gradient(135deg,#43a047,#1b5e20);
+  color:#fff;border-radius:30px;padding:10px 28px;
+  font-size:1rem;font-weight:700;
+  box-shadow:0 6px 22px #2e7d3244;z-index:200;
+  opacity:0;transition:opacity .4s;pointer-events:none;
+  white-space:nowrap;
+}
 
-    /* ── Particles (leaves on feed) ──────────────────────── */
-    .leaf-particle {
-      position: fixed;
-      pointer-events: none;
-      font-size: 1.2rem;
-      animation: leafFall 1.4s ease forwards;
-      z-index: 99;
-    }
-    @keyframes leafFall {
-      0%   { opacity: 1; transform: translate(0,0) rotate(0deg); }
-      100% { opacity: 0; transform: translate(var(--lx), var(--ly)) rotate(360deg); }
-    }
-  </style>
+/* ── WATER TRAIL ── */
+.water-drop{
+  position:fixed;pointer-events:none;z-index:90;
+  width:8px;height:8px;border-radius:50%;
+  background:radial-gradient(circle,#6de0ff,#2196f3);
+  animation:dropFade .6s ease forwards;
+}
+@keyframes dropFade{
+  0%{opacity:.9;transform:scale(1)}
+  100%{opacity:0;transform:scale(.2) translateY(10px)}
+}
+
+/* ── FLOATING +WATER ── */
+.float-text{
+  position:fixed;font-size:1.3rem;font-weight:800;
+  color:#0288d1;pointer-events:none;z-index:200;
+  animation:floatUp 1.2s ease forwards;
+}
+@keyframes floatUp{
+  0%{opacity:1;transform:translateY(0) scale(1)}
+  100%{opacity:0;transform:translateY(-65px) scale(1.35)}
+}
+
+/* ── RAIN OVERLAY TEXT ── */
+#rain-notice{
+  position:fixed;top:76px;left:50%;transform:translateX(-50%);
+  background:#1a4a6add;color:#fff;border-radius:20px;
+  padding:8px 22px;font-size:.9rem;font-weight:700;
+  z-index:200;opacity:0;transition:opacity .5s;pointer-events:none;
+}
+
+/* ── NIGHT OVERLAY ── */
+#night-overlay{
+  position:absolute;inset:0;z-index:1;
+  background:rgba(0,0,30,.5);
+  opacity:0;pointer-events:none;
+  transition:opacity 3s ease;
+}
+
+/* ── CLOCK ── */
+#clock{
+  position:fixed;top:14px;right:22px;
+  background:rgba(0,0,0,.35);backdrop-filter:blur(6px);
+  color:#fff;border-radius:14px;padding:6px 14px;
+  font-size:.9rem;font-weight:700;z-index:200;letter-spacing:.5px;
+}
+
+/* ── FEED LIMIT NOTICE ── */
+#limit-notice{
+  position:fixed;bottom:100px;left:50%;transform:translateX(-50%);
+  background:#e53935dd;color:#fff;border-radius:20px;
+  padding:8px 22px;font-size:.9rem;font-weight:700;
+  z-index:200;opacity:0;transition:opacity .5s;pointer-events:none;
+}
+
+/* ── WATER RIPPLE ON TREE ── */
+.water-splash{
+  position:fixed;pointer-events:none;z-index:150;
+  font-size:1.4rem;
+  animation:splash .8s ease forwards;
+}
+@keyframes splash{
+  0%{opacity:1;transform:scale(.5)} 50%{opacity:1;transform:scale(1.4)} 100%{opacity:0;transform:scale(1.8)}
+}
+
+/* ── SCROLL TOOLTIP ── */
+#sound-btn{
+  position:fixed;bottom:32px;right:22px;
+  background:rgba(255,255,255,.8);backdrop-filter:blur(6px);
+  border:none;border-radius:50%;width:44px;height:44px;
+  font-size:1.3rem;cursor:pointer;z-index:200;
+  box-shadow:0 3px 12px #0002;transition:transform .15s;
+}
+#sound-btn:hover{transform:scale(1.1);}
+</style>
 </head>
 <body>
 
-<!-- ── Background Music ───────────────────────────────────── -->
-<!-- We generate a soft ambient tune with the Web Audio API — no file needed -->
-
-<div id="scene">
+<div id="scene" class="sky-day">
+  <div id="night-overlay"></div>
   <div id="sun"></div>
-
-  <!-- Clouds injected by JS -->
-  <!-- Background trees injected by JS -->
-  <!-- Animals injected by JS -->
-  <!-- Grass injected by JS -->
-
-  <!-- Baby Tree -->
-  <div id="tree-wrapper">
+  <div id="moon"></div>
+  <!-- Stars, clouds, trees, lake, cave, animals → injected by JS -->
+  <div id="tree-container">
+    <div id="tree-canopy2"></div>
     <div id="tree-canopy"></div>
     <div id="tree-trunk"></div>
+    <div id="soil"><div id="seed"></div></div>
   </div>
+  <div id="rain-layer"></div>
 </div>
 
 <!-- HUD -->
 <div id="hud">
-  <span>🌱 Feeds: <b id="feed-count">0</b></span>
-  <span>📏 Stage: <b id="stage-name">Seedling</b></span>
-  <span>🌳 Height: <b id="tree-height">1</b></span>
+  <span>🌱 Stage: <b id="h-stage">Seed</b></span>
+  <span>💧 Fed: <b id="h-fed">0</b></span>
+  <span>🕐 Feeds left: <b id="h-left">4</b></span>
+  <span>🌳 Growth: <b id="h-growth">0%</b></span>
 </div>
 
-<!-- Stage Badge -->
-<div id="stage-badge">🌱 Tap the button to feed your baby tree!</div>
+<!-- Clock -->
+<div id="clock">🌅 06:00</div>
 
-<!-- Feed Button -->
-<button id="feed-btn">💧 Feed the Tree</button>
+<!-- Toasts / notices -->
+<div id="toast">🎉 Tree leveled up!</div>
+<div id="rain-notice">🌧️ It's raining! Animals take shelter.</div>
+<div id="limit-notice">⏳ You can only water 4 times per 12 hours!</div>
+
+<!-- Bowl hint -->
+<div id="bowl-hint">🪣 Pick up the bowl → drag to lake → drag water to tree</div>
+<!-- Bowl -->
+<div id="bowl">🪣</div>
+
+<!-- Sound toggle -->
+<button id="sound-btn" title="Toggle sound">🔊</button>
 
 <script>
-/* ═══════════════════════════════════════════════════════════
-   🎵  Soft Ambient Music via Web Audio API
-   ═══════════════════════════════════════════════════════════ */
-let audioCtx = null;
+"use strict";
+/* ══════════════════════════════════════════════════════════════
+   CONSTANTS & STATE
+══════════════════════════════════════════════════════════════ */
+const W = window.innerWidth, H = window.innerHeight;
+const GROUND_Y = 48; // px from bottom → matches CSS bottom:48px
 
-function startAmbient() {
-  if (audioCtx) return;
-  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+// Day/night: 7 real minutes = full 24h game day
+const REAL_DAY_MS  = 7 * 60 * 1000;   // 7 min real = 24h game
+const GAME_HOUR_MS = REAL_DAY_MS / 24; // 1 game hour in ms
 
-  const master = audioCtx.createGain();
-  master.gain.value = 0.12;
-  master.connect(audioCtx.destination);
+// Rain every 2 game hours, lasts 1 game hour
+const RAIN_INTERVAL_GAME_H = 2;
+const RAIN_DURATION_GAME_H = 1;
 
-  // Pad chords (pentatonic — always sounds peaceful)
-  const notes = [261.63, 293.66, 329.63, 392.00, 440.00, 523.25, 587.33];
+// Feed limits
+const MAX_FEEDS_PER_12H = 4;
 
-  function playChord() {
-    const chord = [notes[0], notes[2], notes[4]]; // C E G
-    chord.forEach(freq => {
-      const osc  = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.type = 'sine';
-      osc.frequency.value = freq;
-      gain.gain.setValueAtTime(0, audioCtx.currentTime);
-      gain.gain.linearRampToValueAtTime(0.06, audioCtx.currentTime + 1.2);
-      gain.gain.linearRampToValueAtTime(0,    audioCtx.currentTime + 5);
-      osc.connect(gain);
-      gain.connect(master);
-      osc.start();
-      osc.stop(audioCtx.currentTime + 5.5);
-    });
-    setTimeout(playChord, 5000 + Math.random() * 3000);
-  }
+// Tree growth stages
+const STAGES = [
+  { name:'Seed',       feeds:0,  cW:0,   cH:0,   c2W:0,  c2H:0,  tW:0,  tH:0,  col:'#4caf50', col2:'#388e3c' },
+  { name:'Sprout',     feeds:1,  cW:40,  cH:44,  c2W:0,  c2H:0,  tW:8,  tH:22, col:'#81c784', col2:'#66bb6a' },
+  { name:'Seedling',   feeds:3,  cW:62,  cH:68,  c2W:0,  c2H:0,  tW:12, tH:38, col:'#66bb6a', col2:'#4caf50' },
+  { name:'Sapling',    feeds:7,  cW:88,  cH:95,  c2W:0,  c2H:0,  tW:16, tH:58, col:'#4caf50', col2:'#43a047' },
+  { name:'Young Tree', feeds:13, cW:115, cH:125, c2W:0,  c2H:0,  tW:20, tH:80, col:'#43a047', col2:'#388e3c' },
+  { name:'Tree',       feeds:22, cW:145, cH:155, c2W:90, c2H:100,tW:24, tH:105,col:'#388e3c', col2:'#2e7d32' },
+  { name:'Tall Tree',  feeds:34, cW:175, cH:190, c2W:115,c2H:125,tW:30, tH:132,col:'#2e7d32', col2:'#1b5e20' },
+  { name:'Grand Tree', feeds:50, cW:210, cH:225, c2W:140,c2H:150,tW:38, tH:162,col:'#1b5e20', col2:'#33691e' },
+  { name:'Ancient Oak',feeds:70, cW:250, cH:265, c2W:170,c2H:180,tW:46, tH:195,col:'#33691e', col2:'#1b5e20' },
+];
 
-  // Gentle random melody
-  function playMelody() {
-    const n = notes[Math.floor(Math.random() * notes.length)];
-    const osc  = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    osc.type = 'triangle';
-    osc.frequency.value = n;
-    gain.gain.setValueAtTime(0, audioCtx.currentTime);
-    gain.gain.linearRampToValueAtTime(0.045, audioCtx.currentTime + .2);
-    gain.gain.linearRampToValueAtTime(0,      audioCtx.currentTime + 1.5);
-    osc.connect(gain);
-    gain.connect(master);
-    osc.start();
-    osc.stop(audioCtx.currentTime + 1.8);
-    setTimeout(playMelody, 600 + Math.random() * 1400);
-  }
+let state = {
+  totalFeeds: 0,
+  feedsThisWindow: 0,       // feeds in current 12h window
+  windowStart: Date.now(),   // when current 12h window started
+  stageIdx: 0,
+  gameStartMs: Date.now(),
+  bowlHasWater: false,
+  isDragging: false,
+  isRaining: false,
+  isNight: false,
+  soundOn: true,
+  lastRainGameH: -1,
+};
 
-  // Wind noise
-  const bufferSize = 2 * audioCtx.sampleRate;
-  const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-  const output = noiseBuffer.getChannelData(0);
-  for (let i = 0; i < bufferSize; i++) output[i] = Math.random() * 2 - 1;
-  const whiteNoise = audioCtx.createBufferSource();
-  whiteNoise.buffer = noiseBuffer;
-  whiteNoise.loop = true;
-  const windFilter = audioCtx.createBiquadFilter();
-  windFilter.type = 'lowpass';
-  windFilter.frequency.value = 400;
-  const windGain = audioCtx.createGain();
-  windGain.gain.value = 0.02;
-  whiteNoise.connect(windFilter);
-  windFilter.connect(windGain);
-  windGain.connect(master);
-  whiteNoise.start();
+/* ══════════════════════════════════════════════════════════════
+   HELPERS
+══════════════════════════════════════════════════════════════ */
+function el(id){ return document.getElementById(id); }
 
-  playChord();
-  setTimeout(playMelody, 1000);
+function showToast(msg, el_id='toast', dur=2800){
+  const t = el(el_id);
+  t.textContent = msg;
+  t.style.opacity = '1';
+  clearTimeout(t._t);
+  t._t = setTimeout(()=>{ t.style.opacity='0'; }, dur);
 }
 
-document.addEventListener('click', startAmbient, { once: true });
-
-/* ═══════════════════════════════════════════════════════════
-   🌲  Scene Builder
-   ═══════════════════════════════════════════════════════════ */
-const scene = document.getElementById('scene');
-
-// ── Clouds ──────────────────────────────────────────────────
-const cloudData = [
-  { top: 40,  left: 5,   dur: 28, delay: 0   },
-  { top: 70,  left: 40,  dur: 38, delay: -12 },
-  { top: 25,  left: 70,  dur: 32, delay: -6  },
-  { top: 90,  left: 20,  dur: 44, delay: -20 },
-];
-cloudData.forEach(c => {
-  const el = document.createElement('div');
-  el.className = 'cloud';
-  el.style.top  = c.top  + 'px';
-  el.style.left = c.left + 'vw';
-  el.style.animationDuration = c.dur + 's';
-  el.style.animationDelay   = c.delay + 's';
-  el.innerHTML = '<span></span><span></span><span></span><span></span>';
-  scene.appendChild(el);
-});
-
-// ── Background Trees ─────────────────────────────────────────
-const bgTrees = [
-  { left: 5,  trunkW: 18, trunkH: 70,  canopyW: 90,  canopyH: 110, color: '#388e3c' },
-  { left: 12, trunkW: 14, trunkH: 55,  canopyW: 75,  canopyH: 95,  color: '#2e7d32' },
-  { left: 20, trunkW: 22, trunkH: 90,  canopyW: 110, canopyH: 140, color: '#43a047' },
-  { left: 72, trunkW: 20, trunkH: 80,  canopyW: 100, canopyH: 130, color: '#33691e' },
-  { left: 80, trunkW: 15, trunkH: 60,  canopyW: 80,  canopyH: 100, color: '#558b2f' },
-  { left: 88, trunkW: 24, trunkH: 95,  canopyW: 115, canopyH: 150, color: '#1b5e20' },
-  { left: 93, trunkW: 12, trunkH: 50,  canopyW: 65,  canopyH: 85,  color: '#388e3c' },
-];
-bgTrees.forEach(t => {
-  const el = document.createElement('div');
-  el.className = 'bg-tree';
-  el.style.left = t.left + 'vw';
-  el.innerHTML = `
-    <div class="canopy" style="
-      width:${t.canopyW}px;height:${t.canopyH}px;
-      background:${t.color};
-      box-shadow:inset -5px -8px 0 ${shadeColor(t.color,-30)}"></div>
-    <div class="trunk" style="width:${t.trunkW}px;height:${t.trunkH}px"></div>`;
-  scene.appendChild(el);
-});
-
-function shadeColor(col, amt) {
-  // very light hex shader
-  let c = col.replace('#','');
-  return '#' + c.match(/.{2}/g).map(x => {
-    let v = Math.min(255, Math.max(0, parseInt(x,16) + amt));
-    return v.toString(16).padStart(2,'0');
-  }).join('');
+function currentGameHour(){
+  const elapsed = Date.now() - state.gameStartMs;
+  // 0–23
+  return (elapsed / GAME_HOUR_MS) % 24;
 }
 
-// ── Grass tufts ───────────────────────────────────────────────
-const grassEmoji = ['🌿','🌾','🍀','🌱'];
-for (let i = 0; i < 18; i++) {
-  const g = document.createElement('div');
-  g.className = 'grass';
-  g.textContent = grassEmoji[Math.floor(Math.random()*grassEmoji.length)];
-  g.style.left = (2 + Math.random() * 96) + 'vw';
-  g.style.fontSize = (.8 + Math.random() * .8) + 'rem';
-  scene.appendChild(g);
-}
-
-// ── Walking Animals ───────────────────────────────────────────
-const animals = [
-  { emoji: '🦊', bottom: 58, dur: 22, delay: -4  },
-  { emoji: '🐇', bottom: 56, dur: 18, delay: -10 },
-  { emoji: '🦌', bottom: 60, dur: 30, delay: -2  },
-  { emoji: '🐿️', bottom: 55, dur: 14, delay: -7  },
-  { emoji: '🦝', bottom: 57, dur: 25, delay: -15 },
-  { emoji: '🐦', bottom: 130, dur: 12, delay: -3 },
-  { emoji: '🦋', bottom: 160, dur: 16, delay: -8 },
-];
-animals.forEach(a => {
-  const el = document.createElement('div');
-  el.className = 'animal';
-  el.textContent = a.emoji;
-  el.style.bottom = a.bottom + 'px';
-  el.style.animationDuration = a.dur + 's';
-  el.style.animationDelay   = a.delay + 's';
-  el.style.fontSize = (1.8 + Math.random() * .8) + 'rem';
-  scene.appendChild(el);
-});
-
-/* ═══════════════════════════════════════════════════════════
-   🌱  Tree Growth Logic
-   ═══════════════════════════════════════════════════════════ */
-const stages = [
-  { name: 'Seedling',    feeds:  0,  cW: 28,  cH: 28,  tW: 6,  tH: 14,  color: '#81c784' },
-  { name: 'Sprout',      feeds:  3,  cW: 50,  cH: 55,  tW: 9,  tH: 26,  color: '#66bb6a' },
-  { name: 'Sapling',     feeds:  8,  cW: 75,  cH: 80,  tW: 13, tH: 42,  color: '#4caf50' },
-  { name: 'Young Tree',  feeds: 15,  cW: 100, cH: 115, tW: 18, tH: 62,  color: '#43a047' },
-  { name: 'Tree',        feeds: 25,  cW: 130, cH: 150, tW: 22, tH: 85,  color: '#388e3c' },
-  { name: 'Tall Tree',   feeds: 40,  cW: 160, cH: 185, tW: 27, tH: 110, color: '#2e7d32' },
-  { name: 'Grand Tree',  feeds: 60,  cW: 200, cH: 230, tW: 34, tH: 140, color: '#1b5e20' },
-  { name: 'Ancient Oak', feeds: 90,  cW: 240, cH: 275, tW: 42, tH: 170, color: '#33691e' },
-];
-
-let feedCount = 0;
-
-const canopy  = document.getElementById('tree-canopy');
-const trunk   = document.getElementById('tree-trunk');
-const wrapper = document.getElementById('tree-wrapper');
-const feedBtn = document.getElementById('feed-btn');
-const feedCountEl  = document.getElementById('feed-count');
-const stageNameEl  = document.getElementById('stage-name');
-const treeHeightEl = document.getElementById('tree-height');
-const stageBadge   = document.getElementById('stage-badge');
-
-function currentStage() {
-  let s = stages[0];
-  for (let i = stages.length - 1; i >= 0; i--) {
-    if (feedCount >= stages[i].feeds) { s = stages[i]; break; }
+function currentStage(){
+  let s = STAGES[0];
+  for(let i = STAGES.length-1; i>=0; i--){
+    if(state.totalFeeds >= STAGES[i].feeds){ s=STAGES[i]; break; }
   }
   return s;
 }
 
-function applyStage(s) {
-  canopy.style.width   = s.cW + 'px';
-  canopy.style.height  = s.cH + 'px';
-  canopy.style.background = s.color;
-  trunk.style.width  = s.tW + 'px';
-  trunk.style.height = s.tH + 'px';
+function stageIndex(){
+  let idx=0;
+  for(let i=STAGES.length-1;i>=0;i--){
+    if(state.totalFeeds>=STAGES[i].feeds){idx=i;break;}
+  }
+  return idx;
 }
 
-function spawnPlusOne() {
-  const rect = wrapper.getBoundingClientRect();
-  const el = document.createElement('div');
-  el.className = 'plus-one';
-  el.textContent = '+1 💧';
-  el.style.left = (rect.left + rect.width/2 - 25 + (Math.random()*30-15)) + 'px';
-  el.style.top  = (rect.top  - 10) + 'px';
-  document.body.appendChild(el);
-  setTimeout(() => el.remove(), 1300);
+function feedsLeft(){
+  // Reset window every 12 game hours = 3.5 real minutes
+  const half = REAL_DAY_MS / 2;
+  if(Date.now() - state.windowStart >= half){
+    state.feedsThisWindow = 0;
+    state.windowStart = Date.now();
+  }
+  return MAX_FEEDS_PER_12H - state.feedsThisWindow;
 }
 
-function spawnLeaves() {
-  const leaves = ['🍃','🍀','🌿','🍂','🌱'];
-  const rect = wrapper.getBoundingClientRect();
-  for (let i = 0; i < 7; i++) {
-    const el = document.createElement('div');
-    el.className = 'leaf-particle';
-    el.textContent = leaves[Math.floor(Math.random()*leaves.length)];
-    el.style.left = (rect.left + Math.random()*rect.width) + 'px';
-    el.style.top  = (rect.top  + Math.random()*rect.height*.5) + 'px';
-    const lx = (Math.random()*120 - 60) + 'px';
-    const ly = (Math.random()*-80 - 20) + 'px';
-    el.style.setProperty('--lx', lx);
-    el.style.setProperty('--ly', ly);
-    el.style.animationDelay = (Math.random()*.4) + 's';
-    document.body.appendChild(el);
-    setTimeout(() => el.remove(), 1600);
+/* ══════════════════════════════════════════════════════════════
+   WEB AUDIO ENGINE
+══════════════════════════════════════════════════════════════ */
+let AC = null, masterGain;
+
+// noise buffer for reuse
+let noiseBuffer = null;
+
+function initAudio(){
+  if(AC) return;
+  AC = new (window.AudioContext||window.webkitAudioContext)();
+  masterGain = AC.createGain();
+  masterGain.gain.value = state.soundOn ? 1 : 0;
+  masterGain.connect(AC.destination);
+  makeNoiseBuffer();
+  startBirds();
+  startWind();
+  // Start rain/cricket manager
+  scheduleSounds();
+}
+
+function makeNoiseBuffer(){
+  const sr = AC.sampleRate;
+  noiseBuffer = AC.createBuffer(1, sr*4, sr);
+  const d = noiseBuffer.getChannelData(0);
+  for(let i=0;i<d.length;i++) d[i]=Math.random()*2-1;
+}
+
+function createNoise(){
+  const src = AC.createBufferSource();
+  src.buffer = noiseBuffer;
+  src.loop = true;
+  return src;
+}
+
+/* ── WIND ── */
+let windNodes = null;
+function startWind(){
+  const n = createNoise();
+  const f = AC.createBiquadFilter();
+  f.type='bandpass'; f.frequency.value=200; f.Q.value=.4;
+  const g = AC.createGain(); g.gain.value=.04;
+  const lfo = AC.createOscillator();
+  const lfoG = AC.createGain(); lfoG.gain.value=.02;
+  lfo.frequency.value=.12;
+  lfo.connect(lfoG); lfoG.connect(g.gain);
+  lfo.start();
+  n.connect(f); f.connect(g); g.connect(masterGain);
+  n.start();
+  windNodes={n,f,g,lfo};
+}
+
+/* ── BIRDS (day) ── */
+let birdTimer = null;
+function startBirds(){
+  function chirp(){
+    if(!state.soundOn || state.isNight || state.isRaining) { birdTimer=setTimeout(chirp, 800+Math.random()*1200); return; }
+    const freqs=[900,1100,1400,1700,2000,2200];
+    const f0 = freqs[Math.floor(Math.random()*freqs.length)];
+    const notes = Math.floor(2+Math.random()*4);
+    let t = AC.currentTime;
+    for(let i=0;i<notes;i++){
+      const o = AC.createOscillator();
+      const g = AC.createGain();
+      o.type='sine';
+      o.frequency.setValueAtTime(f0*(1+i*.15), t+i*.08);
+      o.frequency.exponentialRampToValueAtTime(f0*(1+i*.15)*1.2, t+i*.08+.06);
+      g.gain.setValueAtTime(0, t+i*.08);
+      g.gain.linearRampToValueAtTime(.08+Math.random()*.04, t+i*.08+.02);
+      g.gain.exponentialRampToValueAtTime(.001, t+i*.08+.1);
+      o.connect(g); g.connect(masterGain);
+      o.start(t+i*.08); o.stop(t+i*.08+.15);
+    }
+    birdTimer = setTimeout(chirp, 400+Math.random()*1800);
+  }
+  chirp();
+}
+
+/* ── CRICKETS (night) ── */
+let cricketTimer = null;
+function startCrickets(){
+  stopCrickets();
+  function chip(){
+    if(!state.soundOn || !state.isNight){ cricketTimer=setTimeout(chip,500); return; }
+    const t = AC.currentTime;
+    for(let i=0;i<3;i++){
+      const o=AC.createOscillator(), g=AC.createGain();
+      o.type='square'; o.frequency.value=4200+Math.random()*200;
+      g.gain.setValueAtTime(0,t+i*.03);
+      g.gain.linearRampToValueAtTime(.025,t+i*.03+.005);
+      g.gain.exponentialRampToValueAtTime(.001,t+i*.03+.04);
+      o.connect(g); g.connect(masterGain);
+      o.start(t+i*.03); o.stop(t+i*.03+.05);
+    }
+    cricketTimer=setTimeout(chip, 120+Math.random()*80);
+  }
+  chip();
+}
+function stopCrickets(){
+  if(cricketTimer){ clearTimeout(cricketTimer); cricketTimer=null; }
+}
+
+/* ── RAIN ── */
+let rainNodes=null;
+function startRainSound(){
+  if(rainNodes) return;
+  const n=createNoise();
+  const f=AC.createBiquadFilter(); f.type='bandpass'; f.frequency.value=1800; f.Q.value=.3;
+  const f2=AC.createBiquadFilter(); f2.type='lowpass'; f2.frequency.value=3000;
+  const g=AC.createGain(); g.gain.setValueAtTime(0,AC.currentTime);
+  g.gain.linearRampToValueAtTime(.18,AC.currentTime+3);
+  // occasional thunder rumble
+  const n2=createNoise();
+  const f3=AC.createBiquadFilter(); f3.type='lowpass'; f3.frequency.value=60;
+  const g2=AC.createGain(); g2.gain.value=.09;
+  n2.connect(f3); f3.connect(g2); g2.connect(masterGain);
+  n.connect(f); f.connect(f2); f2.connect(g); g.connect(masterGain);
+  n.start(); n2.start();
+  rainNodes={n,f,f2,g,n2,f3,g2};
+}
+function stopRainSound(){
+  if(!rainNodes) return;
+  try{
+    rainNodes.g.gain.linearRampToValueAtTime(0,AC.currentTime+2);
+    setTimeout(()=>{
+      try{rainNodes.n.stop();rainNodes.n2.stop();}catch(e){}
+      rainNodes=null;
+    },2100);
+  }catch(e){rainNodes=null;}
+}
+
+/* ── WATER SPLASH (on feed) ── */
+function playSplash(){
+  if(!AC||!state.soundOn) return;
+  const t=AC.currentTime;
+  // drip
+  const n=createNoise();
+  const f=AC.createBiquadFilter(); f.type='bandpass'; f.frequency.value=800; f.Q.value=2;
+  const g=AC.createGain();
+  g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(.3,t+.02);
+  g.gain.exponentialRampToValueAtTime(.001,t+.35);
+  n.connect(f); f.connect(g); g.connect(masterGain);
+  n.start(t); n.stop(t+.4);
+  // plop
+  for(let i=0;i<3;i++){
+    const o=AC.createOscillator(),gp=AC.createGain();
+    o.type='sine'; o.frequency.setValueAtTime(300-i*60,t+i*.05);
+    o.frequency.exponentialRampToValueAtTime(80,t+i*.05+.15);
+    gp.gain.setValueAtTime(0,t+i*.05); gp.gain.linearRampToValueAtTime(.1,t+i*.05+.01);
+    gp.gain.exponentialRampToValueAtTime(.001,t+i*.05+.18);
+    o.connect(gp); gp.connect(masterGain);
+    o.start(t+i*.05); o.stop(t+i*.05+.2);
   }
 }
 
-function updateHUD(s, prevStage) {
-  feedCountEl.textContent  = feedCount;
-  stageNameEl.textContent  = s.name;
-  treeHeightEl.textContent = Math.round(s.tH / 14);
+/* ── LEVEL UP CHIME ── */
+function playLevelUp(){
+  if(!AC||!state.soundOn) return;
+  const freqs=[523,659,784,1047];
+  freqs.forEach((f,i)=>{
+    const t=AC.currentTime+i*.12;
+    const o=AC.createOscillator(),g=AC.createGain();
+    o.type='triangle'; o.frequency.value=f;
+    g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(.12,t+.04);
+    g.gain.exponentialRampToValueAtTime(.001,t+.35);
+    o.connect(g); g.connect(masterGain);
+    o.start(t); o.stop(t+.4);
+  });
+}
 
-  if (prevStage && s.name !== prevStage.name) {
-    stageBadge.textContent = `🎉 Your tree grew into a ${s.name}!`;
-    stageBadge.style.opacity = '1';
-    setTimeout(() => { stageBadge.style.opacity = '0'; }, 3000);
+function scheduleSounds(){
+  setInterval(()=>{
+    const gh = currentGameHour();
+    const isN = gh>=20||gh<6;
+    if(isN!==state.isNight){
+      state.isNight=isN;
+      if(isN){startCrickets();}else{stopCrickets();}
+    }
+  },500);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   SCENE BUILDER
+══════════════════════════════════════════════════════════════ */
+const scene = el('scene');
+
+/* ── STARS ── */
+const stars=[];
+for(let i=0;i<180;i++){
+  const s=document.createElement('div');
+  s.className='star';
+  const sz=.5+Math.random()*2.5;
+  s.style.cssText=`
+    width:${sz}px;height:${sz}px;
+    left:${Math.random()*100}%;
+    top:${Math.random()*45}%;
+    opacity:0;
+    animation-duration:${1.5+Math.random()*3}s;
+    animation-delay:${Math.random()*3}s;
+  `;
+  scene.appendChild(s);
+  stars.push(s);
+}
+function setStars(visible){
+  stars.forEach(s=>s.style.opacity=visible?null:'0');
+}
+
+/* ── CLOUDS ── */
+function makeCloud(topPx, durationS, delayS, scaleX=1){
+  const c=document.createElement('div'); c.className='cloud';
+  c.style.top=topPx+'px';
+  c.style.animationDuration=durationS+'s';
+  c.style.animationDelay=delayS+'s';
+  const b=document.createElement('div'); b.className='cloud-body';
+  b.style.transform=`scaleX(${scaleX})`;
+  b.style.animationName='cloudFloat';
+  b.style.animationDuration=durationS+'s';
+  b.style.animationDelay=delayS+'s';
+  b.style.animationTimingFunction='linear';
+  b.style.animationIterationCount='infinite';
+  b.style.position='relative';
+  const shapes=[
+    {w:90,h:54,t:18,l:0},{w:64,h:64,t:6,l:40},{w:78,h:52,t:20,l:76},{w:130,h:34,t:34,l:12}
+  ];
+  shapes.forEach(sh=>{
+    const s=document.createElement('span');
+    s.style.cssText=`width:${sh.w}px;height:${sh.h}px;top:${sh.t}px;left:${sh.l}px;`;
+    b.appendChild(s);
+  });
+  c.appendChild(b);
+  scene.appendChild(c);
+  return c;
+}
+const cloudEls=[];
+cloudEls.push(makeCloud(38, 30, 0));
+cloudEls.push(makeCloud(60, 42, -14, .8));
+cloudEls.push(makeCloud(28, 26, -8, 1.1));
+cloudEls.push(makeCloud(80, 50, -22, .9));
+
+/* ── BACKGROUND TREES ── */
+function shade(hex,amt){
+  return '#'+hex.replace('#','').match(/.{2}/g).map(x=>
+    Math.min(255,Math.max(0,parseInt(x,16)+amt)).toString(16).padStart(2,'0')
+  ).join('');
+}
+const bgTreeData=[
+  {left:3,  tW:16,tH:65, cW:85, cH:105,col:'#388e3c'},
+  {left:9,  tW:12,tH:48, cW:68, cH:88, col:'#2e7d32'},
+  {left:17, tW:20,tH:88, cW:108,cH:138,col:'#43a047'},
+  {left:24, tW:10,tH:42, cW:58, cH:75, col:'#558b2f'},
+  {left:70, tW:18,tH:78, cW:98, cH:125,col:'#33691e'},
+  {left:77, tW:14,tH:55, cW:75, cH:98, col:'#2e7d32'},
+  {left:84, tW:22,tH:92, cW:112,cH:145,col:'#1b5e20'},
+  {left:91, tW:11,tH:45, cW:62, cH:80, col:'#388e3c'},
+];
+bgTreeData.forEach(t=>{
+  const d=document.createElement('div'); d.className='bg-tree';
+  d.style.left=t.left+'vw';
+  d.innerHTML=`
+    <div class="can" style="width:${t.cW}px;height:${t.cH}px;background:${t.col};box-shadow:inset -5px -8px 0 ${shade(t.col,-30)};"></div>
+    <div class="trk" style="width:${t.tW}px;height:${t.tH}px;"></div>`;
+  scene.appendChild(d);
+});
+
+/* ── LAKE ── */
+const lakeW=160, lakeH=75;
+const lakeLeft = W*0.68;
+const lakeBottom = GROUND_Y;
+const lakeDiv=document.createElement('div');
+lakeDiv.id='lake';
+lakeDiv.style.cssText=`width:${lakeW}px;height:${lakeH}px;left:${lakeLeft}px;bottom:${lakeBottom}px;`;
+// ripple lines
+for(let i=0;i<3;i++){
+  const r=document.createElement('div'); r.className='lake-line';
+  r.style.cssText=`width:${40+i*25}px;height:${14+i*8}px;top:${20+i*12}px;left:${30+i*15}px;animation-delay:${i*.8}s;`;
+  lakeDiv.appendChild(r);
+}
+scene.appendChild(lakeDiv);
+
+// Lake label
+const lakeLabel=document.createElement('div');
+lakeLabel.style.cssText=`position:absolute;bottom:${lakeBottom+lakeH+4}px;left:${lakeLeft+lakeW/2-20}px;font-size:.75rem;font-weight:700;color:#1a5276;z-index:6;`;
+lakeLabel.textContent='🏞️ Lake';
+scene.appendChild(lakeLabel);
+
+/* ── CAVE ── */
+const caveLeft=W*0.05;
+const caveDiv=document.createElement('div');
+caveDiv.id='cave';
+caveDiv.style.left=caveLeft+'px';
+caveDiv.innerHTML=`<div id="cave-rock"></div><div id="cave-mouth"></div>`;
+scene.appendChild(caveDiv);
+
+// Cave label
+const caveLabel=document.createElement('div');
+caveLabel.style.cssText=`position:absolute;bottom:${GROUND_Y+68}px;left:${caveLeft+12}px;font-size:.75rem;font-weight:700;color:#5d4037;z-index:6;`;
+caveLabel.textContent='🦠 Cave';
+scene.appendChild(caveLabel);
+
+/* ── GRASS ── */
+const gEmoji=['🌿','🌾','🍀'];
+for(let i=0;i<22;i++){
+  const g=document.createElement('div'); g.className='grass';
+  g.textContent=gEmoji[Math.floor(Math.random()*gEmoji.length)];
+  g.style.left=(1+Math.random()*98)+'vw';
+  g.style.fontSize=(.75+Math.random()*.7)+'rem';
+  scene.appendChild(g);
+}
+
+/* ── ANIMALS ── */
+const ANIMAL_DEFS=[
+  {e:'🦊',spd:16,bottom:60,layer:5},
+  {e:'🐇',spd:12,bottom:58,layer:5},
+  {e:'🦌',spd:22,bottom:62,layer:5},
+  {e:'🐿️',spd:10,bottom:57,layer:5},
+  {e:'🦝',spd:18,bottom:59,layer:5},
+  {e:'🐦',spd:9,bottom:150,layer:5},
+  {e:'🦋',spd:11,bottom:170,layer:5},
+];
+const animalEls=[];
+ANIMAL_DEFS.forEach((a,i)=>{
+  const d=document.createElement('div'); d.className='animal';
+  d.textContent=a.e;
+  d.style.bottom=a.bottom+'px';
+  d.style.zIndex=a.layer;
+  d.style.fontSize=(1.7+Math.random()*.6)+'rem';
+  // give random start position
+  d.style.left=(Math.random()*80+5)+'vw';
+  scene.appendChild(d);
+  animalEls.push({el:d, def:a, dir:1, x:Math.random()*80+5, hidden:false, hideTimer:null});
+});
+
+/* ── POSITION TREE & BOWL ── */
+const treeContainer=el('tree-container');
+// Place tree in centre
+treeContainer.style.left=(W/2)+'px';
+treeContainer.style.transform='translateX(-50%)';
+
+/* ══════════════════════════════════════════════════════════════
+   ANIMAL WALK LOGIC (manual RAF — not CSS anim, so we can hide)
+══════════════════════════════════════════════════════════════ */
+function walkAnimals(dt){
+  if(state.isRaining) return; // hiding in cave
+  animalEls.forEach(a=>{
+    if(a.hidden) return;
+    a.x += a.def.spd * a.dir * dt * 0.001;
+    if(a.x>105){ a.x=105; a.dir=-1; a.el.style.transform='scaleX(-1)'; }
+    if(a.x<-5){ a.x=-5; a.dir=1; a.el.style.transform='scaleX(1)'; }
+    a.el.style.left=a.x+'vw';
+    // slight bob
+    const bob=Math.sin(Date.now()*0.006+a.def.bottom)*3;
+    a.el.style.bottom=(a.def.bottom+bob)+'px';
+  });
+}
+
+function hideAnimals(){
+  animalEls.forEach(a=>{
+    a.hidden=true;
+    a.el.style.opacity='0';
+    // move to cave
+    a.el.style.left=(caveLeft/W*100+2)+'vw';
+    a.el.style.bottom='62px';
+  });
+}
+function showAnimals(){
+  animalEls.forEach(a=>{
+    a.hidden=false;
+    a.el.style.opacity='1';
+    a.x=Math.random()*70+5;
+    a.el.style.left=a.x+'vw';
+    a.el.style.bottom=a.def.bottom+'px';
+  });
+}
+
+/* ══════════════════════════════════════════════════════════════
+   RAIN VISUAL
+══════════════════════════════════════════════════════════════ */
+const rainLayer=el('rain-layer');
+let rainDropEls=[];
+
+function buildRain(){
+  rainLayer.style.display='block';
+  rainLayer.innerHTML='';
+  rainDropEls=[];
+  for(let i=0;i<120;i++){
+    const d=document.createElement('div'); d.className='raindrop';
+    const h=14+Math.random()*22;
+    d.style.cssText=`
+      left:${Math.random()*110-5}%;
+      height:${h}px;
+      animation-duration:${.5+Math.random()*.8}s;
+      animation-delay:${Math.random()*1}s;
+      opacity:${.4+Math.random()*.5};
+    `;
+    rainLayer.appendChild(d);
+    rainDropEls.push(d);
+  }
+}
+function clearRain(){
+  rainLayer.style.display='none';
+  rainLayer.innerHTML='';
+  rainDropEls=[];
+}
+
+/* ══════════════════════════════════════════════════════════════
+   DAY / NIGHT / SUN / MOON / STARS / SKY
+══════════════════════════════════════════════════════════════ */
+const sunEl=el('sun'), moonEl=el('moon'), overlay=el('night-overlay');
+const clockEl=el('clock');
+
+function setSkyForHour(gh){
+  const s=scene;
+  if(gh>=6&&gh<18){
+    s.className='sky-day';
+    overlay.style.opacity='0';
+    setStars(false);
+    moonEl.style.opacity='0';
+    // sun position: arc from left to right
+    const progress=(gh-6)/12; // 0→1
+    const sx=W*0.05+W*0.9*progress;
+    const sy=80 - Math.sin(progress*Math.PI)*( H*0.38);
+    sunEl.style.left=sx+'px';
+    sunEl.style.top=sy+'px';
+    sunEl.style.opacity='1';
+    // cloud brightness
+    cloudEls.forEach(c=>{ const b=c.querySelector('.cloud-body'); if(b) b.style.background=''; });
+    clockEl.style.background='rgba(0,0,0,.3)';
+  } else if(gh>=18&&gh<20){
+    s.className='sky-sunset';
+    overlay.style.opacity='.1';
+    setStars(false);
+    moonEl.style.opacity='0';
+    const p=(gh-18)/2;
+    sunEl.style.left=(W*0.95-W*0.1*p)+'px';
+    sunEl.style.top=(H*.55+H*.1*p)+'px';
+    sunEl.style.opacity=(1-p*.8)+'';
+    clockEl.style.background='rgba(80,20,0,.5)';
+  } else {
+    // night
+    s.className='sky-night';
+    overlay.style.opacity='.45';
+    setStars(true);
+    sunEl.style.opacity='0';
+    moonEl.style.opacity='1';
+    // moon arc
+    const nh=gh>=20 ? gh-20 : gh+4; // 0–10 across night
+    const np=nh/10;
+    const mx=W*0.05+W*0.9*np;
+    const my=80 - Math.sin(np*Math.PI)*(H*0.32);
+    moonEl.style.left=mx+'px';
+    moonEl.style.top=my+'px';
+    // dim clouds
+    cloudEls.forEach(c=>{ const b=c.querySelector('.cloud-body'); if(b) b.style.background='rgba(180,200,255,0.4)'; });
+    clockEl.style.background='rgba(0,0,80,.6)';
+  }
+  // Format game clock display
+  const hh=Math.floor(gh)%24;
+  const mm=Math.floor((gh%1)*60);
+  const ampm=hh>=12?'PM':'AM';
+  const h12=hh%12||12;
+  const icon=hh>=20||hh<6?'🌙':(hh>=18?'🌅':'☀️');
+  clockEl.textContent=`${icon} ${String(h12).padStart(2,'0')}:${String(mm).padStart(2,'0')} ${ampm}`;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   RAIN CYCLE
+══════════════════════════════════════════════════════════════ */
+function checkRain(gh){
+  // Rain on every even 2-hour mark, for 1 game hour
+  const block=Math.floor(gh/RAIN_INTERVAL_GAME_H);
+  const blockH=block*RAIN_INTERVAL_GAME_H;
+  const withinRain=(gh-blockH)<RAIN_DURATION_GAME_H;
+
+  if(withinRain&&!state.isRaining){
+    state.isRaining=true;
+    buildRain();
+    startRainSound();
+    hideAnimals();
+    showToast('🌧️ It\'s raining! Animals run to the cave.','rain-notice',4000);
+    // darken sky slightly
+    overlay.style.opacity=state.isNight?'.55':'.15';
+  } else if(!withinRain&&state.isRaining){
+    state.isRaining=false;
+    clearRain();
+    stopRainSound();
+    showAnimals();
+    overlay.style.opacity=state.isNight?'.45':'0';
   }
 }
 
-function feed() {
-  const prev = currentStage();
-  feedCount++;
-  const next = currentStage();
+/* ══════════════════════════════════════════════════════════════
+   TREE RENDERING
+══════════════════════════════════════════════════════════════ */
+const canopy=el('tree-canopy'), canopy2=el('tree-canopy2');
+const trunk=el('tree-trunk'), seedEl=el('seed');
 
-  feedCountEl.textContent = feedCount;
-  applyStage(next);
-  updateHUD(next, prev);
-  spawnPlusOne();
-  spawnLeaves();
-
-  // bounce animation
-  wrapper.classList.remove('bounce');
-  void wrapper.offsetWidth; // reflow
-  wrapper.classList.add('bounce');
-  wrapper.addEventListener('animationend', () => wrapper.classList.remove('bounce'), { once: true });
-
-  // button emoji cycling
-  const drops = ['💧','🌧️','🚿','🪣','☔'];
-  feedBtn.innerHTML = drops[feedCount % drops.length] + ' Feed the Tree';
+function applyStage(s){
+  if(s.tH===0){
+    // seed stage
+    seedEl.style.opacity='1';
+    trunk.style.width='0px'; trunk.style.height='0px';
+    canopy.style.width='0px'; canopy.style.height='0px';
+    canopy2.style.opacity='0';
+    return;
+  }
+  seedEl.style.opacity='0';
+  trunk.style.width=s.tW+'px'; trunk.style.height=s.tH+'px';
+  canopy.style.width=s.cW+'px'; canopy.style.height=s.cH+'px';
+  canopy.style.background=s.col;
+  canopy2.style.opacity=s.c2W>0?'1':'0';
+  if(s.c2W>0){
+    canopy2.style.width=s.c2W+'px'; canopy2.style.height=s.c2H+'px';
+    canopy2.style.background=s.col2;
+  }
 }
 
-feedBtn.addEventListener('click', feed);
-// Also allow clicking the tree itself
-wrapper.addEventListener('click', feed);
+/* ══════════════════════════════════════════════════════════════
+   HUD UPDATE
+══════════════════════════════════════════════════════════════ */
+function updateHUD(){
+  const s=currentStage();
+  const fl=feedsLeft();
+  const nextS=STAGES[Math.min(stageIndex()+1,STAGES.length-1)];
+  const progress=nextS.feeds>s.feeds
+    ? Math.round(((state.totalFeeds-s.feeds)/(nextS.feeds-s.feeds))*100)
+    : 100;
+  el('h-stage').textContent=s.name;
+  el('h-fed').textContent=state.totalFeeds;
+  el('h-left').textContent=fl;
+  el('h-growth').textContent=progress+'%';
+}
 
-// Init
-applyStage(currentStage());
-updateHUD(currentStage(), null);
+/* ══════════════════════════════════════════════════════════════
+   BOWL DRAG SYSTEM
+══════════════════════════════════════════════════════════════ */
+const bowlEl=el('bowl');
+let drag={ active:false, startX:0, startY:0, curX:0, curY:0 };
+let trailTimer=null;
+
+// Get tree bounding box
+function getTreeRect(){
+  return treeContainer.getBoundingClientRect();
+}
+function getLakeRect(){
+  return lakeDiv.getBoundingClientRect();
+}
+
+// Is point inside rect?
+function ptInRect(x,y,r){ return x>=r.left&&x<=r.right&&y>=r.top&&y<=r.bottom; }
+
+// Position bowl initially
+function positionBowlDefault(){
+  bowlEl.style.position='fixed';
+  bowlEl.style.left=(W/2-26)+'px';
+  bowlEl.style.bottom='32px';
+  bowlEl.style.top='';
+  bowlEl.style.transform='';
+}
+positionBowlDefault();
+
+function onDragStart(e){
+  if(!AC){ initAudio(); }
+  e.preventDefault();
+  const pt=getPoint(e);
+  drag.active=true;
+  drag.curX=pt.x-26; drag.curY=pt.y-26;
+  bowlEl.style.left=drag.curX+'px';
+  bowlEl.style.top=drag.curY+'px';
+  bowlEl.style.bottom='';
+  bowlEl.style.transform='scale(1.15)';
+  bowlEl.classList.add('dragging');
+  document.addEventListener('mousemove',onDragMove,{passive:false});
+  document.addEventListener('touchmove',onDragMove,{passive:false});
+  document.addEventListener('mouseup',onDragEnd);
+  document.addEventListener('touchend',onDragEnd);
+}
+
+function onDragMove(e){
+  if(!drag.active) return;
+  e.preventDefault();
+  const pt=getPoint(e);
+  drag.curX=pt.x-26; drag.curY=pt.y-26;
+  bowlEl.style.left=drag.curX+'px';
+  bowlEl.style.top=drag.curY+'px';
+  // water trail if bowl has water
+  if(state.bowlHasWater){
+    spawnWaterDrop(pt.x,pt.y);
+  }
+}
+
+function onDragEnd(e){
+  if(!drag.active) return;
+  drag.active=false;
+  bowlEl.classList.remove('dragging');
+  const pt=getPoint(e);
+  const lakeR=getLakeRect();
+  const treeR=getTreeRect();
+
+  if(!state.bowlHasWater){
+    // Check if dropped on lake → fill bowl
+    if(ptInRect(pt.x,pt.y,lakeR)){
+      state.bowlHasWater=true;
+      bowlEl.textContent='🪣';
+      bowlEl.classList.add('has-water');
+      bowlEl.style.filter='drop-shadow(0 0 10px #4fc3f7) drop-shadow(0 0 5px #0288d1)';
+      bowlEl.style.fontSize='2.8rem';
+      showToast('💧 Bowl filled with water! Now drag it to the tree.','toast',2200);
+      el('bowl-hint').textContent='🌱 Drag the full bowl to your tree!';
+    } else {
+      positionBowlDefault();
+    }
+  } else {
+    // Check if dropped on tree
+    if(ptInRect(pt.x,pt.y,treeR)){
+      feedTree(pt.x,pt.y);
+    } else {
+      positionBowlDefault();
+    }
+  }
+
+  document.removeEventListener('mousemove',onDragMove);
+  document.removeEventListener('touchmove',onDragMove);
+  document.removeEventListener('mouseup',onDragEnd);
+  document.removeEventListener('touchend',onDragEnd);
+}
+
+function getPoint(e){
+  if(e.touches&&e.touches.length>0) return {x:e.touches[0].clientX,y:e.touches[0].clientY};
+  if(e.changedTouches&&e.changedTouches.length>0) return {x:e.changedTouches[0].clientX,y:e.changedTouches[0].clientY};
+  return {x:e.clientX,y:e.clientY};
+}
+
+function spawnWaterDrop(x,y){
+  const d=document.createElement('div');
+  d.className='water-drop';
+  d.style.left=(x-4)+'px'; d.style.top=(y-4)+'px';
+  document.body.appendChild(d);
+  setTimeout(()=>d.remove(),700);
+}
+
+bowlEl.addEventListener('mousedown',onDragStart);
+bowlEl.addEventListener('touchstart',onDragStart,{passive:false});
+
+/* ══════════════════════════════════════════════════════════════
+   FEED TREE
+══════════════════════════════════════════════════════════════ */
+function feedTree(x,y){
+  const fl=feedsLeft();
+  if(fl<=0){
+    showToast('⏳ Only 4 waters per 12 game-hours! Come back later.','limit-notice',3000);
+    state.bowlHasWater=false;
+    bowlEl.textContent='🪣';
+    bowlEl.classList.remove('has-water');
+    bowlEl.style.filter='';
+    bowlEl.style.fontSize='2.5rem';
+    positionBowlDefault();
+    el('bowl-hint').textContent='🪣 Pick up the bowl → drag to lake → drag water to tree';
+    return;
+  }
+
+  const prevStage=currentStage();
+  state.totalFeeds++;
+  state.feedsThisWindow++;
+
+  const newStage=currentStage();
+  applyStage(newStage);
+  updateHUD();
+
+  // splash effects
+  playSplash();
+  spawnSplash(x,y);
+  spawnFloatText('💧 +1',x,y);
+
+  // bounce
+  treeContainer.classList.remove('treeBounce');
+  void treeContainer.offsetWidth;
+  treeContainer.classList.add('treeBounce');
+
+  // level up?
+  if(newStage.name!==prevStage.name){
+    playLevelUp();
+    showToast(`🎉 Your tree became a ${newStage.name}!`,'toast',3200);
+  }
+
+  // reset bowl
+  state.bowlHasWater=false;
+  bowlEl.textContent='🪣';
+  bowlEl.classList.remove('has-water');
+  bowlEl.style.filter='';
+  bowlEl.style.fontSize='2.5rem';
+  positionBowlDefault();
+  el('bowl-hint').textContent='🪣 Pick up the bowl → drag to lake → drag water to tree';
+}
+
+function spawnSplash(x,y){
+  const emojis=['💦','🌊','💧','✨'];
+  emojis.forEach((e,i)=>{
+    const d=document.createElement('div'); d.className='water-splash';
+    d.textContent=e;
+    d.style.left=(x-12+Math.random()*30-15)+'px';
+    d.style.top=(y-20+Math.random()*20-10)+'px';
+    d.style.animationDelay=(i*.08)+'s';
+    document.body.appendChild(d);
+    setTimeout(()=>d.remove(),900);
+  });
+}
+
+function spawnFloatText(txt,x,y){
+  const d=document.createElement('div'); d.className='float-text';
+  d.textContent=txt;
+  d.style.left=(x-20)+'px'; d.style.top=(y-30)+'px';
+  document.body.appendChild(d);
+  setTimeout(()=>d.remove(),1300);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   SOUND TOGGLE
+══════════════════════════════════════════════════════════════ */
+el('sound-btn').addEventListener('click',()=>{
+  if(!AC){ initAudio(); return; }
+  state.soundOn=!state.soundOn;
+  masterGain.gain.linearRampToValueAtTime(state.soundOn?1:0,AC.currentTime+.3);
+  el('sound-btn').textContent=state.soundOn?'🔊':'🔇';
+});
+
+/* ══════════════════════════════════════════════════════════════
+   MAIN LOOP
+══════════════════════════════════════════════════════════════ */
+let lastT=0;
+function loop(t){
+  const dt=t-lastT; lastT=t;
+  const gh=currentGameHour();
+  setSkyForHour(gh);
+  checkRain(gh);
+  walkAnimals(dt);
+  updateHUD();
+  requestAnimationFrame(loop);
+}
+
+// INIT
+applyStage(STAGES[0]);
+updateHUD();
+requestAnimationFrame(loop);
+
+// Start audio on first interaction (browser policy)
+document.addEventListener('pointerdown',()=>{ if(!AC) initAudio(); },{once:true});
+
+// Hint auto-fade
+setTimeout(()=>{ el('bowl-hint').style.opacity='.55'; },6000);
 </script>
 </body>
 </html>
